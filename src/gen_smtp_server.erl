@@ -145,7 +145,9 @@ extract_listener(Config, DefaultConfig) ->
     Hostname = proplists:get_value(domain, NewConfig),
     Protocol = proplists:get_value(protocol, NewConfig),
     SessionOptions = proplists:get_value(sessionoptions, NewConfig, []),
-    ListenOptions = [binary, {ip, IP}, Family],
+    CertFile = proplists:get_value(certfile, NewConfig, "server.crt"),
+    KeyFile = proplists:get_value(keyfile, NewConfig, "server.key"),
+    ListenOptions = [binary, {ip, IP}, Family, {certfile, CertFile}, {keyfile, KeyFile}],
     case socket:listen(Protocol, Port, ListenOptions) of
         {ok, ListenSocket} -> %%Create first accepting process
             error_logger:info_msg("~p listening on ~p:~p via ~p~n", [?MODULE, IP, Port, Protocol]),
