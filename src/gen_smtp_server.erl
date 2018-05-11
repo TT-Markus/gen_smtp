@@ -182,19 +182,24 @@ handle_info({inet_async, ListenPort,_, {ok, ClientAcceptSocket}},
 	#state{module = Module, listeners = Listeners, sessions = CurSessions} = State) ->
 	try
 		% find this ListenPort in our listeners.
+		lager:warning("Listeners=~p CurSessions=~p Module=~p",[Listeners, CurSessions, Module]),
 		[Listener] = lists:flatten([case L#listener.port of
 					ListenPort -> L;
 					_ -> []
 				end || L <- Listeners]),
+		lager:warning("Listener=~p Socket=~p ClientSocket=~p ListenOptions=~p ",[Listener, Listener#listener.socket, ClientAcceptSocket, Listener#listener.listenoptions]),
 		{ok, ClientSocket} = socket:handle_inet_async(Listener#listener.socket, ClientAcceptSocket, Listener#listener.listenoptions),
+			lager:warning("ClientSocket=~p",[ClientSocket]),
 		%% New client connected
 		% io:format("new client connection.~n", []),
 		Sessions = case gen_smtp_server_session:start(ClientSocket, Module, [{hostname, Listener#listener.hostname}, {sessioncount, length(CurSessions) + 1} | Listener#listener.sessionoptions]) of
 			{ok, Pid} ->
+				lager:warning("Linking Pid=~p",[Pid]),
 				link(Pid),
 				socket:controlling_process(ClientSocket, Pid),
 				CurSessions ++[Pid];
 			_Other ->
+				lager:warning("Other=~p",[_Other]),
 				CurSessions
 		end,
 		{noreply, State#state{sessions = Sessions}}
